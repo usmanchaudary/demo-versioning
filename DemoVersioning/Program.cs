@@ -41,7 +41,7 @@ public class VersionService
         var assembly = Assembly.GetExecutingAssembly();
         Version = assembly.GetName().Version?.ToString() ?? "unknown";
         InformationalVersion = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion ?? "unknown";
-        AssemblyVersion = assembly.GetCustomAttribute<AssemblyVersionAttribute>()?.Version ?? "unknown";
+        AssemblyVersion = assembly.GetName().Version?.ToString() ?? "unknown";
         FileVersion = assembly.GetCustomAttribute<AssemblyFileVersionAttribute>()?.Version ?? "unknown";
     }
 
