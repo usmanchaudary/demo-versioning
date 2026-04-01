@@ -6,15 +6,18 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
-    <!-- GitVersion.MsBuild automatically sets Version, AssemblyVersion,
-         FileVersion, and InformationalVersion at build time.
-         Do NOT hardcode version properties here or they will override GitVersion. -->
+    <!-- Nerdbank.GitVersioning sets Version, AssemblyVersion, FileVersion,
+         and InformationalVersion at build time from version.json -->
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="GitVersion.MsBuild" Version="6.*" />
+    <PackageReference Include="Nerdbank.GitVersioning" Version="3.*" PrivateAssets="all" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.*" />
     <PackageReference Include="Spectre.Console" Version="0.49.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ExcelWorker\ExcelWorker\ExcelWorker.csproj" />
   </ItemGroup>
 
 </Project>

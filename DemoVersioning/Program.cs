@@ -1,4 +1,5 @@
 using System.Reflection;
+using ExcelWorker;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Spectre.Console;
@@ -49,21 +50,36 @@ public class VersionService
     {
         AnsiConsole.Write(new FigletText("DemoVersioning").Color(Color.Green));
 
-        var table = new Table()
+        // Main App version table
+        var appTable = new Table()
+            .Title("[bold underline]Main App[/]")
             .Border(TableBorder.Rounded)
             .AddColumn("[bold]Property[/]")
             .AddColumn("[bold]Value[/]");
 
-        table.AddRow("Informational Version", $"[cyan]{InformationalVersion}[/]");
-        table.AddRow("Assembly Version", $"[yellow]{AssemblyVersion}[/]");
-        table.AddRow("File Version", $"[yellow]{FileVersion}[/]");
-        table.AddRow("Version", $"[yellow]{Version}[/]");
-        table.AddRow("Environment", $"[green]{GetEnvironment()}[/]");
-        table.AddRow("Runtime", $"[blue]{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}[/]");
-        table.AddRow("OS", $"[blue]{System.Runtime.InteropServices.RuntimeInformation.OSDescription}[/]");
+        appTable.AddRow("Informational Version", $"[cyan]{InformationalVersion}[/]");
+        appTable.AddRow("Assembly Version", $"[yellow]{AssemblyVersion}[/]");
+        appTable.AddRow("File Version", $"[yellow]{FileVersion}[/]");
+        appTable.AddRow("Version", $"[yellow]{Version}[/]");
+        appTable.AddRow("Environment", $"[green]{GetEnvironment()}[/]");
+        appTable.AddRow("Runtime", $"[blue]{System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription}[/]");
 
-        AnsiConsole.Write(table);
-        AnsiConsole.MarkupLine($"\n[grey]Built from git history using GitVersion + Semantic Versioning[/]");
+        AnsiConsole.Write(appTable);
+        AnsiConsole.WriteLine();
+
+        // ExcelWorker version table
+        var workerTable = new Table()
+            .Title("[bold underline]ExcelWorker[/]")
+            .Border(TableBorder.Rounded)
+            .AddColumn("[bold]Property[/]")
+            .AddColumn("[bold]Value[/]");
+
+        workerTable.AddRow("Informational Version", $"[cyan]{ExcelProcessor.Version}[/]");
+        workerTable.AddRow("Assembly Version", $"[yellow]{ExcelProcessor.AssemblyVersion}[/]");
+
+        AnsiConsole.Write(workerTable);
+
+        AnsiConsole.MarkupLine($"\n[grey]Each project versions independently via Nerdbank.GitVersioning (version.json per directory)[/]");
     }
 
     private static string GetEnvironment()
