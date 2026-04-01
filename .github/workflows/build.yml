@@ -14,46 +14,37 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # GitVersion needs full history
-
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v4
-        with:
-          versionSpec: '6.x'
-
-      - name: Determine Version
-        id: gitversion
-        uses: gittools/actions/gitversion/execute@v4
-        with:
-          useConfigFile: true
-
-      - name: Display Version
-        run: |
-          echo "SemVer: ${{ steps.gitversion.outputs.semVer }}"
-          echo "FullSemVer: ${{ steps.gitversion.outputs.fullSemVer }}"
-          echo "Major: ${{ steps.gitversion.outputs.major }}"
-          echo "Minor: ${{ steps.gitversion.outputs.minor }}"
-          echo "Patch: ${{ steps.gitversion.outputs.patch }}"
-          echo "PreReleaseTag: ${{ steps.gitversion.outputs.preReleaseTag }}"
-          echo "NuGetVersion: ${{ steps.gitversion.outputs.nuGetVersionV2 }}"
+          fetch-depth: 0  # Nerdbank.GitVersioning needs full history
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
+      - name: Install nbgv CLI
+        run: dotnet tool install --global nbgv
+
+      - name: Get Versions
+        id: versions
+        run: |
+          APP_VERSION=$(nbgv get-version --project DemoVersioning -v SemVer2)
+          WORKER_VERSION=$(nbgv get-version --project ExcelWorker -v SemVer2)
+          SETTINGS_VERSION=$(nbgv get-version --project ExcelWorker/ExcelWorker.Settings -v SemVer2)
+
+          echo "app=$APP_VERSION" >> $GITHUB_OUTPUT
+          echo "worker=$WORKER_VERSION" >> $GITHUB_OUTPUT
+          echo "settings=$SETTINGS_VERSION" >> $GITHUB_OUTPUT
+
+          echo "=== Computed Versions ==="
+          echo "Main App:             $APP_VERSION"
+          echo "ExcelWorker:          $WORKER_VERSION"
+          echo "ExcelWorker.Settings: $SETTINGS_VERSION"
+
       - name: Restore
         run: dotnet restore DemoVersioning/DemoVersioning.csproj
 
       - name: Build
-        run: |
-          dotnet build DemoVersioning/DemoVersioning.csproj \
-            --configuration Release \
-            --no-restore \
-            /p:Version=${{ steps.gitversion.outputs.semVer }} \
-            /p:AssemblyVersion=${{ steps.gitversion.outputs.assemblySemVer }} \
-            /p:FileVersion=${{ steps.gitversion.outputs.assemblySemFileVer }} \
-            /p:InformationalVersion=${{ steps.gitversion.outputs.informationalVersion }}
+        run: dotnet build DemoVersioning/DemoVersioning.csproj --configuration Release --no-restore
 
       - name: Run App (show version)
         run: dotnet run --project DemoVersioning/DemoVersioning.csproj --configuration Release --no-build
@@ -62,16 +53,15 @@ jobs:
         run: |
           dotnet publish DemoVersioning/DemoVersioning.csproj \
             --configuration Release \
-            --output ./publish \
-            /p:Version=${{ steps.gitversion.outputs.semVer }}
+            --output ./publish
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: DemoVersioning-${{ steps.gitversion.outputs.semVer }}
+          name: DemoVersioning-${{ steps.versions.outputs.app }}
           path: ./publish/
 
-  tag-release:
+  auto-tag:
     needs: build
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -84,18 +74,59 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
         with:
-          versionSpec: '6.x'
+          dotnet-version: '8.0.x'
 
-      - name: Determine Version
-        id: gitversion
-        uses: gittools/actions/gitversion/execute@v4
-        with:
-          useConfigFile: true
+      - name: Install nbgv CLI
+        run: dotnet tool install --global nbgv
 
-      - name: Create Git Tag
+      - name: Detect changes and auto-tag
         run: |
-          git tag v${{ steps.gitversion.outputs.semVer }}
-          git push origin v${{ steps.gitversion.outputs.semVer }}
+          # Get versions for each project
+          APP_VERSION=$(nbgv get-version --project DemoVersioning -v SemVer2)
+          WORKER_VERSION=$(nbgv get-version --project ExcelWorker -v SemVer2)
+          SETTINGS_VERSION=$(nbgv get-version --project ExcelWorker/ExcelWorker.Settings -v SemVer2)
+
+          # Get changed files in this push
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          echo "---"
+
+          # Tag Main App if DemoVersioning/ changed
+          if echo "$CHANGED_FILES" | grep -q "^DemoVersioning/"; then
+            TAG="app/v${APP_VERSION}"
+            if ! git tag -l "$TAG" | grep -q "$TAG"; then
+              echo "Tagging: $TAG"
+              git tag "$TAG"
+            else
+              echo "Tag $TAG already exists, skipping"
+            fi
+          fi
+
+          # Tag ExcelWorker if ExcelWorker/ changed (any subfolder)
+          if echo "$CHANGED_FILES" | grep -q "^ExcelWorker/"; then
+            TAG="excelworker/v${WORKER_VERSION}"
+            if ! git tag -l "$TAG" | grep -q "$TAG"; then
+              echo "Tagging: $TAG"
+              git tag "$TAG"
+            else
+              echo "Tag $TAG already exists, skipping"
+            fi
+          fi
+
+          # Tag ExcelWorker.Settings if its folder changed
+          if echo "$CHANGED_FILES" | grep -q "^ExcelWorker/ExcelWorker.Settings/"; then
+            TAG="excelworker-settings/v${SETTINGS_VERSION}"
+            if ! git tag -l "$TAG" | grep -q "$TAG"; then
+              echo "Tagging: $TAG"
+              git tag "$TAG"
+            else
+              echo "Tag $TAG already exists, skipping"
+            fi
+          fi
+
+          # Push all new tags
+          git push origin --tags
