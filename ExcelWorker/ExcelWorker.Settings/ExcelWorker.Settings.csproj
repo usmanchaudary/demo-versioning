@@ -1,18 +1,13 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <!-- Nerdbank.GitVersioning sets Version from version.json in this directory -->
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.*" PrivateAssets="all" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\ExcelWorker.Settings\ExcelWorker.Settings.csproj" />
   </ItemGroup>
 
 </Project>

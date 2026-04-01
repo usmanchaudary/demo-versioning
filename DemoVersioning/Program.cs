@@ -1,5 +1,6 @@
 using System.Reflection;
 using ExcelWorker;
+using ExcelWorker.Settings;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Spectre.Console;
@@ -78,8 +79,21 @@ public class VersionService
         workerTable.AddRow("Assembly Version", $"[yellow]{ExcelProcessor.AssemblyVersion}[/]");
 
         AnsiConsole.Write(workerTable);
+        AnsiConsole.WriteLine();
 
-        AnsiConsole.MarkupLine($"\n[grey]Each project versions independently via Nerdbank.GitVersioning (version.json per directory)[/]");
+        // ExcelWorker.Settings version table
+        var settingsTable = new Table()
+            .Title("[bold underline]ExcelWorker.Settings[/]")
+            .Border(TableBorder.Rounded)
+            .AddColumn("[bold]Property[/]")
+            .AddColumn("[bold]Value[/]");
+
+        settingsTable.AddRow("Informational Version", $"[cyan]{ExcelSettings.Version}[/]");
+        settingsTable.AddRow("Assembly Version", $"[yellow]{ExcelSettings.AssemblyVersion}[/]");
+
+        AnsiConsole.Write(settingsTable);
+
+        AnsiConsole.MarkupLine($"\n[grey]ExcelWorker depends on ExcelWorker.Settings — changing Settings bumps both.[/]");
     }
 
     private static string GetEnvironment()
