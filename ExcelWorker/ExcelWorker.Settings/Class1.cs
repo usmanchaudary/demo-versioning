@@ -10,6 +10,8 @@ public class ExcelSettings
     public int MaxColumnsPerSheet { get; set; } = 16_384;
     public bool AutoTrimCellValues { get; set; } = true;
     public bool IgnoreEmptyRows { get; set; } = true;
+    public string DefaultSheetName { get; set; } = "Sheet1";
+    public bool EnableStrictValidation { get; set; } = false;
 
     public static string Version =>
         Assembly.GetExecutingAssembly()
