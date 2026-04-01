@@ -12,6 +12,7 @@ public class ExcelSettings
     public bool IgnoreEmptyRows { get; set; } = true;
     public string DefaultSheetName { get; set; } = "Sheet1";
     public bool EnableStrictValidation { get; set; } = false;
+    public int BatchSize { get; set; } = 1000;
 
     public static string Version =>
         Assembly.GetExecutingAssembly()
