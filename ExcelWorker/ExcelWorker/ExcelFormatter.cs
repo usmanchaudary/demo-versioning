@@ -18,7 +18,7 @@ public class ExcelFormatter
                 ? dt.ToString("yyyy-MM-dd")
                 : value?.ToString() ?? string.Empty,
 
-            _ => value?.ToString() ?? string.Empty
+            _ => value?.ToString() ?? ""
         };
     }
 }
